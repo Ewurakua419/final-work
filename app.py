@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, send_from_directory
 
 app=Flask(__name__)
 
-@app.route('/simulator')
+@app.route('/')
 def simulator():#a function that returns the simulator page taking inputs from the javascript file
     return render_template('simulator.html')
     
