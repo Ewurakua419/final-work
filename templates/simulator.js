@@ -188,8 +188,8 @@ const COLORS = {
 
 
 function tokenize(expr) {
-    expr = expr.replace(AND(/g, ' ( ').replace(AND)/g, ' ) ');
-    const tokens = expr.trim().split(ANDs+/);
+    expr = expr.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ');
+    const tokens = expr.trim().split(/\s+/);
     return tokens.filter(t => t.length > 0);
 }
 
