@@ -30,7 +30,7 @@ function updateInputConfig() {
         div.innerHTML = `
         <span style="font-weight:bold; color:var(--primary)">Input ${label}</span>
         <label class="radio-label">
-            <input type="checkbox" onchange="updateInputState('${label}', 'not', this.checked)"> NOT
+            <input type="checkbox" onchange="updateInputState('${label}', 'not', this.checked)"> ¬
         </label>
         <select onchange="updateInputState('${label}', 'var', this.value)">
             ${VAR_OPTIONS.map(v => `<option value="${v}" ${v === defaultVar ? 'selected' : ''}>${v}</option>`).join('')}
@@ -90,14 +90,14 @@ function renderBuilder() {
         <div class="recipe-row">
             <div class="fixed-input">Input ${inputConfig[0].id} (${inputConfig[0].var})</div>
             
-            <label class="radio-label"><input type="checkbox" ${step1.not1 ? 'checked' : ''} onchange="updateStep(0, 'not1', this.checked)"> NOT</label>
+            <label class="radio-label"><input type="checkbox" ${step1.not1 ? 'checked' : ''} onchange="updateStep(0, 'not1', this.checked)"> ¬</label>
             
             <select class="op-select" onchange="updateStep(0, 'op', this.value)">
                 <option value="AND" ${step1.op === 'AND' ? 'selected' : ''}>AND (∧)</option>
                 <option value="OR" ${step1.op === 'OR' ? 'selected' : ''}>OR (∨)</option>
             </select>
 
-            <label class="radio-label"><input type="checkbox" ${step1.not2 ? 'checked' : ''} onchange="updateStep(0, 'not2', this.checked)"> NOT</label>
+            <label class="radio-label"><input type="checkbox" ${step1.not2 ? 'checked' : ''} onchange="updateStep(0, 'not2', this.checked)"> ¬</label>
             
             <div class="fixed-input">Input ${inputConfig[1].id} (${inputConfig[1].var})</div>
         </div>
@@ -124,7 +124,7 @@ function renderBuilder() {
                     <option value="OR" ${step2.op === 'OR' ? 'selected' : ''}>OR (∨)</option>
                 </select>
 
-                <label class="radio-label"><input type="checkbox" ${step2.not2 ? 'checked' : ''} onchange="updateStep(1, 'not2', this.checked)"> NOT</label>
+                <label class="radio-label"><input type="checkbox" ${step2.not2 ? 'checked' : ''} onchange="updateStep(1, 'not2', this.checked)"> ¬</label>
                 
                 <div class="fixed-input">Input ${inputConfig[2].id} (${inputConfig[2].var})</div>
             </div>
@@ -158,17 +158,17 @@ function renderBuilder() {
 function buildExpressionFromGUI() {
     const inputMap = {};
     inputConfig.forEach(inp => {
-        inputMap[inp.id] = inp.not ? `(NOT ${inp.var})` : inp.var;
+        inputMap[inp.id] = inp.not ? `(¬ ${inp.var})` : inp.var;
     });
 
     const s1 = recipeSteps[0];
-    const term1 = s1.not1 ? `(NOT ${inputMap[inputConfig[0].id]})` : inputMap[inputConfig[0].id];
-    const term2 = s1.not2 ? `(NOT ${inputMap[inputConfig[1].id]})` : inputMap[inputConfig[1].id];
+    const term1 = s1.not1 ? `(¬ ${inputMap[inputConfig[0].id]})` : inputMap[inputConfig[0].id];
+    const term2 = s1.not2 ? `(¬ ${inputMap[inputConfig[1].id]})` : inputMap[inputConfig[1].id];
     let expr = `(${term1} ${s1.op} ${term2})`;
 
     if (recipeSteps.length > 1) {
         const s2 = recipeSteps[1];
-        const term3 = s2.not2 ? `(NOT ${inputMap[inputConfig[2].id]})` : inputMap[inputConfig[2].id];
+        const term3 = s2.not2 ? `(¬ ${inputMap[inputConfig[2].id]})` : inputMap[inputConfig[2].id];
         expr = `(${expr} ${s2.op} ${term3})`;
     }
 
@@ -188,8 +188,8 @@ const COLORS = {
 
 
 function tokenize(expr) {
-    expr = expr.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ');
-    const tokens = expr.trim().split(/\s+/);
+    expr = expr.replace(AND(/g, ' ( ').replace(AND)/g, ' ) ');
+    const tokens = expr.trim().split(ANDs+/);
     return tokens.filter(t => t.length > 0);
 }
 
@@ -233,10 +233,10 @@ class Parser {
     parseFactor() {
         const token = this.peek();
         if (!token) throw new Error("Unexpected end of expression");
-        if (token.toUpperCase() === 'NOT') {
+        if (token.toUpperCase() === '¬') {
             this.consume();
             const operand = this.parseFactor();
-            return { type: 'NOT', right: operand };
+            return { type: '¬', right: operand };
         } else if (token === '(') {
             this.consume();
             const expr = this.parseExpression();
@@ -253,11 +253,11 @@ class Parser {
 
 /**
  * Calculates the final result (ON or OFF) for a specific set of inputs.
- * It follows the logic rules (AND, OR, NOT) to find the answer.
+ * It follows the logic rules (AND, OR, ¬) to find the answer.
  */
 function evaluate(ast, context) {
     if (ast.type === 'VAR') return context[ast.value];
-    else if (ast.type === 'NOT') return !evaluate(ast.right, context);
+    else if (ast.type === '¬') return !evaluate(ast.right, context);
     else if (ast.type === 'AND') return evaluate(ast.left, context) && evaluate(ast.right, context);
     else if (ast.type === 'OR') return evaluate(ast.left, context) || evaluate(ast.right, context);
     throw new Error("Unknown node type");
@@ -339,7 +339,7 @@ function drawCircuit(ast, canvas) {
             ctx.quadraticCurveTo(x - 10, y - 20, x, y);
             ctx.quadraticCurveTo(x - 10, y + 20, x - 30, y + 20);
             ctx.quadraticCurveTo(x - 20, y, x - 30, y - 20); ctx.closePath();
-        } else if (node.type === 'NOT') {
+        } else if (node.type === '¬') {
             ctx.moveTo(x - 30, y - 15); ctx.lineTo(x - 5, y); ctx.lineTo(x - 30, y + 15); ctx.closePath();
             ctx.moveTo(x, y); ctx.arc(x - 2.5, y, 2.5, 0, Math.PI * 2);
         } else if (node.type === 'VAR') {
@@ -350,7 +350,7 @@ function drawCircuit(ast, canvas) {
         ctx.fill(); ctx.stroke();
 
         const childX = x - LEVEL_SPACING;
-        if (node.type === 'NOT') {
+        if (node.type === '¬') {
             const childY = y;
             ctx.strokeStyle = COLORS.wire;
             ctx.beginPath(); ctx.moveTo(x - 30, y); ctx.lineTo(childX, childY); ctx.stroke();
