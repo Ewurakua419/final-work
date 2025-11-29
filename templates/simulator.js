@@ -6,6 +6,10 @@ function init() {
     updateInputConfig();
 }
 
+
+/**
+ * Sets up the input boxes (A, B, C) based on how many inputs you selected.
+ */
 function updateInputConfig() {
     const num = parseInt(document.querySelector('input[name="num-inputs"]:checked').value);
     const container = document.getElementById('input-config-container');
@@ -17,7 +21,9 @@ function updateInputConfig() {
         const label = labels[i];
         const defaultVar = VAR_OPTIONS[i];
 
+
         inputConfig.push({ id: label, var: defaultVar, not: false });
+
 
         const div = document.createElement('div');
         div.className = 'config-row';
@@ -33,9 +39,11 @@ function updateInputConfig() {
         container.appendChild(div);
     }
 
+
     recipeSteps = [{ id: 1, op: 'AND', not1: false, not2: false }];
     renderBuilder();
 }
+
 
 function updateInputState(id, field, value) {
     const item = inputConfig.find(x => x.id === id);
@@ -43,26 +51,34 @@ function updateInputState(id, field, value) {
     renderBuilder();
 }
 
+
 function addRecipeStep() {
     if (recipeSteps.length >= 2) return;
     recipeSteps.push({ id: 2, op: 'AND', not2: false });
     renderBuilder();
 }
 
+
 function removeRecipeStep() {
     recipeSteps.pop();
     renderBuilder();
 }
 
+
 function updateStep(index, field, value) {
     recipeSteps[index][field] = value;
 }
 
+/**
+ * Updates the screen to show the current steps for building the circuit.
+ * It adds the boxes and buttons you see based on the number of inputs you selected.
+ */
 function renderBuilder() {
     const container = document.getElementById('builder-container');
     container.innerHTML = '';
     const numInputs = inputConfig.length;
     const btn = document.querySelector('.builder-btn');
+
 
     const step1 = recipeSteps[0];
     const step1HTML = `
@@ -90,6 +106,7 @@ function renderBuilder() {
 `;
     container.innerHTML += step1HTML;
 
+
     if (recipeSteps.length > 1 && numInputs === 3) {
         const step2 = recipeSteps[1];
         const step2HTML = `
@@ -116,6 +133,7 @@ function renderBuilder() {
         container.innerHTML += step2HTML;
     }
 
+
     const addBtn = document.getElementById('add-step-btn');
     if (addBtn) {
         if (numInputs === 2) {
@@ -134,6 +152,9 @@ function renderBuilder() {
     }
 }
 
+/**
+ * Reads the steps you created on the screen and turns them into a text formula that the code can work with.
+ */
 function buildExpressionFromGUI() {
     const inputMap = {};
     inputConfig.forEach(inp => {
@@ -164,24 +185,31 @@ const COLORS = {
     gateFill: '#e2e8f0',
     text: '#1e293b'
 };
+
+
 function tokenize(expr) {
     expr = expr.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ');
     const tokens = expr.trim().split(/\s+/);
     return tokens.filter(t => t.length > 0);
 }
 
+
 class Parser {
     constructor(tokens) {
         this.tokens = tokens;
         this.pos = 0;
     }
+
     peek() { return this.tokens[this.pos]; }
+
     consume() { return this.tokens[this.pos++]; }
+
     parse() {
         const ast = this.parseExpression();
         if (this.pos < this.tokens.length) throw new Error("Unexpected token: " + this.peek());
         return ast;
     }
+
     parseExpression() {
         let left = this.parseTerm();
         while (this.peek() && this.peek().toUpperCase() === 'OR') {
@@ -191,6 +219,7 @@ class Parser {
         }
         return left;
     }
+
     parseTerm() {
         let left = this.parseFactor();
         while (this.peek() && this.peek().toUpperCase() === 'AND') {
@@ -200,6 +229,7 @@ class Parser {
         }
         return left;
     }
+
     parseFactor() {
         const token = this.peek();
         if (!token) throw new Error("Unexpected end of expression");
@@ -221,7 +251,11 @@ class Parser {
     }
 }
 
-function evaluate(ast, context) {//Evaluates the truth of the statement given
+/**
+ * Calculates the final result (ON or OFF) for a specific set of inputs.
+ * It follows the logic rules (AND, OR, NOT) to find the answer.
+ */
+function evaluate(ast, context) {
     if (ast.type === 'VAR') return context[ast.value];
     else if (ast.type === 'NOT') return !evaluate(ast.right, context);
     else if (ast.type === 'AND') return evaluate(ast.left, context) && evaluate(ast.right, context);
@@ -229,6 +263,9 @@ function evaluate(ast, context) {//Evaluates the truth of the statement given
     throw new Error("Unknown node type");
 }
 
+/**
+ * Creates a list of every possible combination of inputs (like all ON, all OFF, and everything in between) and finds the result for each one.
+ */
 function generateTruthTable(ast, numInputs) {
     const vars = inputConfig.map(c => c.var);
     const rows = Math.pow(2, numInputs);
@@ -236,6 +273,7 @@ function generateTruthTable(ast, numInputs) {
 
     for (let i = 0; i < rows; i++) {
         const context = {};
+
         for (let j = 0; j < numInputs; j++) {
             const bit = (i >> (numInputs - 1 - j)) & 1;
             context[vars[j]] = bit === 1;
@@ -249,14 +287,24 @@ function generateTruthTable(ast, numInputs) {
     return { vars, tableData };
 }
 
+/**
+ * Draws the visual diagram of the circuit on the screen.
+ * It connects the inputs and gates with lines to show how the signal flows.
+ */
 function drawCircuit(ast, canvas) {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
+    
+
     ctx.clearRect(0, 0, rect.width, rect.height);
+    
+
     ctx.strokeStyle = COLORS.wire;
     ctx.fillStyle = COLORS.gateFill;
     ctx.lineWidth = 2;
@@ -280,6 +328,8 @@ function drawCircuit(ast, canvas) {
         ctx.fillStyle = COLORS.gateFill;
         ctx.strokeStyle = COLORS.gateStroke;
         ctx.beginPath();
+        
+
         if (node.type === 'AND') {
             ctx.moveTo(x - 30, y - 20); ctx.lineTo(x - 15, y - 20);
             ctx.arc(x - 15, y, 20, -Math.PI / 2, Math.PI / 2);
@@ -311,15 +361,20 @@ function drawCircuit(ast, canvas) {
             const botY = y + halfHeight / 2;
             ctx.strokeStyle = COLORS.wire;
             let inputOffsetX = node.type === 'OR' ? -25 : -30;
+            
+
             ctx.beginPath(); ctx.moveTo(x + inputOffsetX, y - 10);
             ctx.bezierCurveTo(x - 60, y - 10, x - 40, topY, childX, topY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(x + inputOffsetX, y + 10);
             ctx.bezierCurveTo(x - 60, y + 10, x - 40, botY, childX, botY); ctx.stroke();
+            
             drawNode(node.left, childX, topY, halfHeight);
             drawNode(node.right, childX, botY, halfHeight);
         }
     }
     drawNode(ast, rootX, startY, rect.height - 40);
+    
+
     ctx.beginPath(); ctx.moveTo(rootX, startY); ctx.lineTo(rootX + 40, startY); ctx.stroke();
     ctx.fillStyle = COLORS.text; ctx.fillText("OUT", rootX + 60, startY);
 }
@@ -329,20 +384,26 @@ const errorDisplay = document.getElementById('error-display');
 const tableContainer = document.getElementById('truth-table-container');
 const canvas = document.getElementById('circuit-canvas');
 
+
 generateBtn.addEventListener('click', () => {
     errorDisplay.textContent = '';
     try {
+
         const expr = buildExpressionFromGUI();
         console.log("Generated Expression:", expr);
+
 
         const tokens = tokenize(expr);
         if (tokens.length === 0) throw new Error("Please build an expression.");
 
+
         const parser = new Parser(tokens);
         const ast = parser.parse();
 
+
         const numInputs = inputConfig.length;
         const { vars, tableData } = generateTruthTable(ast, numInputs);
+
 
         renderTable(vars, tableData);
         drawCircuit(ast, canvas);
@@ -352,6 +413,7 @@ generateBtn.addEventListener('click', () => {
         console.error(err);
     }
 });
+
 
 function renderTable(vars, data) {
     let html = '<table><thead><tr>';
@@ -365,5 +427,6 @@ function renderTable(vars, data) {
     html += '</tbody></table>';
     tableContainer.innerHTML = html;
 }
+
 
 init();
