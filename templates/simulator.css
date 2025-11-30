@@ -1,15 +1,3 @@
- :root { /*The colors for the page*/
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    /*#d43faf: #d43faf;
-    #f68ac5: #f68ac5;*/
-    --text-main: #720649;
-    --text-muted: #eba4d9;
-    --border: #d48a97;
-    --success: #eb0c1f;
-    --error: #ef4444;
-    --input-bg: #e07fb0;
-}
 
 * {/*The box where the inputa are located*/
     box-sizing: border-box;
