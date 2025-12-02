@@ -89,9 +89,7 @@ function renderBuilder() {
         </div>
         <div class="recipe-row">
             <div class="fixed-input">Input ${inputConfig[0].id} (${inputConfig[0].var})</div>
-            
-            // <label class="radio-label"><input type="checkbox" ${step1.not1 ? 'checked' : ''} onchange="updateStep(0, 'not1', this.checked)"> ¬</label>
-            
+                        
             <select class="op-select" onchange="updateStep(0, 'op', this.value)">
                 <option value="AND" ${step1.op === 'AND' ? 'selected' : ''}>AND (∧)</option>
                 <option value="OR" ${step1.op === 'OR' ? 'selected' : ''}>OR (∨)</option>
